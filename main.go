@@ -145,8 +145,8 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 
 // функция для инициализации базы данных и запуска сервера
 func main() {
-	InitDB() // Инициализация базы данных
-
+	InitDB()         // Инициализация базы данных
+	defer db.Close() // Закрываем подключение
 	m := http.NewServeMux()
 	m.HandleFunc("/users", createUserHandler)         // Создание пользователя
 	m.HandleFunc("/users/", getUserHandler)           // Получение пользователя по ID
