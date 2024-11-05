@@ -90,7 +90,7 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler для получения пользователя по ID
 func getUserHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id") // Извлекаем ID из параметра запроса
+	id := r.PathValue("id") // Извлекаем ID из параметра запроса
 	var user User
 
 	err := db.QueryRow(`SELECT * FROM users WHERE id = $1`, id).Scan(&user.ID, &user.Name, &user.Age, &user.Email)
@@ -109,7 +109,7 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler для обновления пользователя по ID
 func updateUserHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	id := r.PathValue("id")
 
 	var user User
 
@@ -131,7 +131,7 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler для удаления пользователя по ID
 func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	id := r.PathValue("id")
 
 	// Удаляем пользователя из базы данных
 	_, err := db.Exec(`DELETE FROM users WHERE id = $1`, id)
@@ -148,11 +148,11 @@ func main() {
 	InitDB()         // Инициализация базы данных
 	defer db.Close() // Закрываем подключение
 	m := http.NewServeMux()
-	m.HandleFunc("/users", createUserHandler)         // Создание пользователя
-	m.HandleFunc("/users/", getUserHandler)           // Получение пользователя по ID
-	m.HandleFunc("/users/all", getUsersHandler)       // Получить всех пользователей
-	m.HandleFunc("/users/update/", updateUserHandler) // Обновление пользователя по ID
-	m.HandleFunc("/users/delete/", deleteUserHandler) // Удаление пользователя по ID
+	m.HandleFunc("POST /users", createUserHandler)                // Создание пользователя
+	m.HandleFunc("GET /users/{id}", getUserHandler)               // Получение пользователя по ID
+	m.HandleFunc("GET /users/all", getUsersHandler)               // Получить всех пользователей
+	m.HandleFunc("PUT /users/update/{id}/", updateUserHandler)    // Обновление пользователя по ID
+	m.HandleFunc("DELETE /users/delete/{id}/", deleteUserHandler) // Удаление пользователя по ID
 
 	http.ListenAndServe(":7777", m) // Запуск сервера на порту 7777
 }
