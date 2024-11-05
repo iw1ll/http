@@ -17,6 +17,12 @@ type User struct {
 	Email string `json:"email"`
 }
 
+type UserResponse struct {
+	Name  string `json:"name"`
+	Age   int    `json:"age"`
+	Email string `json:"email"`
+}
+
 var db *sql.DB
 
 // InitDB - функция запускает соединение с базой данных и создает таблицу пользователей
@@ -44,8 +50,7 @@ func InitDB() {
 	log.Println("Database initialized!")
 }
 
-// Handler для создания нового пользователя
-func createUserHandler(w http.ResponseWriter, r *http.Request) {
+func createUser(w http.ResponseWriter, r *http.Request) {
 	var user User
 
 	// Прочитаем тело запроса и декодируем JSON в структуру User
@@ -65,8 +70,7 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user) // Отправляем назад созданного пользователя
 }
 
-// Handler для получения всех пользователей
-func getUsersHandler(w http.ResponseWriter, r *http.Request) {
+func usersAll(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query(`SELECT * FROM users`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -88,8 +92,7 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users) // Отправляем всех пользователей
 }
 
-// Handler для получения пользователя по ID
-func getUserHandler(w http.ResponseWriter, r *http.Request) {
+func getUserId(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id") // Извлекаем ID из параметра запроса
 	var user User
 
@@ -107,8 +110,7 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user) // Отправляем пользователя в формате JSON
 }
 
-// Handler для обновления пользователя по ID
-func updateUserHandler(w http.ResponseWriter, r *http.Request) {
+func updateUserId(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	var user User
@@ -126,11 +128,16 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent) // Возвращаем статус 204 No Content
+	userResponse := UserResponse{
+		Name:  user.Name,
+		Age:   user.Age,
+		Email: user.Email,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(userResponse) // Отправляем пользователя в формате JSON
 }
 
-// Handler для удаления пользователя по ID
-func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func deleteUserId(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	// Удаляем пользователя из базы данных
@@ -143,16 +150,15 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent) // Возвращаем статус 204 No Content
 }
 
-// функция для инициализации базы данных и запуска сервера
 func main() {
-	InitDB()         // Инициализация базы данных
-	defer db.Close() // Закрываем подключение
+	InitDB()
+	defer db.Close()
 	m := http.NewServeMux()
-	m.HandleFunc("POST /users", createUserHandler)                // Создание пользователя
-	m.HandleFunc("GET /users/{id}", getUserHandler)               // Получение пользователя по ID
-	m.HandleFunc("GET /users/all", getUsersHandler)               // Получить всех пользователей
-	m.HandleFunc("PUT /users/update/{id}/", updateUserHandler)    // Обновление пользователя по ID
-	m.HandleFunc("DELETE /users/delete/{id}/", deleteUserHandler) // Удаление пользователя по ID
+	m.HandleFunc("POST /create", createUser)
+	m.HandleFunc("GET /user/{id}", getUserId)
+	m.HandleFunc("GET /users/all", usersAll)
+	m.HandleFunc("PUT /users/update/{id}/", updateUserId)
+	m.HandleFunc("DELETE /users/delete/{id}/", deleteUserId)
 
-	http.ListenAndServe(":7777", m) // Запуск сервера на порту 7777
+	http.ListenAndServe(":7777", m)
 }
