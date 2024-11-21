@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -159,6 +161,26 @@ func main() {
 	m.HandleFunc("GET /users/all", usersAll)
 	m.HandleFunc("PUT /users/update/{id}/", updateUserId)
 	m.HandleFunc("DELETE /users/delete/{id}/", deleteUserId)
+	fmt.Println(getXML("https://jsonplaceholder.typicode.com/todos/1"))
 
 	http.ListenAndServe(":7777", m)
+}
+
+func getXML(url string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("GET error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("status error: %v", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read body: %v", err)
+	}
+
+	return string(data), nil
 }
