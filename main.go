@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -163,6 +164,16 @@ func main() {
 	m.HandleFunc("DELETE /users/delete/{id}/", deleteUserId)
 	fmt.Println(getXML("https://jsonplaceholder.typicode.com/todos/1"))
 
+	ch := make(chan bool)
+	for i := 0; i < 1000; i++ {
+		go iter(i, ch)
+		time.Sleep(1 * time.Millisecond)
+	}
+
+	for i := 0; i < 1000; i++ {
+		<-ch
+	}
+
 	http.ListenAndServe(":7777", m)
 }
 
@@ -183,4 +194,10 @@ func getXML(url string) (string, error) {
 	}
 
 	return string(data), nil
+}
+
+func iter(i int, ch chan bool) {
+	fmt.Println(i)
+	fmt.Println(time.Now())
+	ch <- true
 }
